@@ -13,10 +13,13 @@ import {
 } from '../services/storage';
 
 // Type représentant un utilisateur authentifié
+// Les champs correspondent au payload du token JWT décodé
 interface Utilisateur {
   id: number;
   email: string;
   roles: string[];
+  prenom: string;
+  nom: string;
 }
 
 // Type du contexte d'authentification
