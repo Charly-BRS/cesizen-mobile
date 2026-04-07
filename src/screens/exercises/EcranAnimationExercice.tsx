@@ -2,7 +2,7 @@
 // Écran d'animation de respiration.
 //
 // Fonctionnement :
-//   1. Charge l'exercice depuis l'API
+//   1. Reçoit l'exercice en paramètre de navigation (déjà chargé par la liste)
 //   2. L'utilisateur appuie sur "Commencer"
 //   3. Un cercle animé guide la respiration (inspiration → apnée → expiration)
 //   4. Si connecté : une session est créée en BD et mise à jour à la fin
@@ -14,7 +14,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator,
   Animated,
   Easing,
   ScrollView,
@@ -24,7 +23,6 @@ import type { RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { useAuth } from '../../context/AuthContext';
 import {
-  getExercice,
   demarrerSession,
   terminerSession,
   type BreathingExercise,
@@ -61,12 +59,12 @@ const EcranAnimationExercice: React.FC = () => {
   const route = useRoute<RouteAnimationExercice>();
   const navigation = useNavigation<NavigationAnimationExercice>();
   const { estConnecte } = useAuth();
-  const { idExercice } = route.params;
+  // L'exercice est passé directement depuis la liste → aucune requête API supplémentaire
+  const { exercice: exerciceParams } = route.params;
 
-  // ─── États : chargement de l'exercice ─────────────────────────────────────
-  const [exercice, setExercice] = useState<BreathingExercise | null>(null);
-  const [chargement, setChargement] = useState<boolean>(true);
-  const [erreur, setErreur] = useState<string>('');
+  // ─── L'exercice vient directement des params, pas besoin de le stocker en state ──
+  // On garde une const simple : la valeur ne change pas pendant la durée de l'écran.
+  const exercice: BreathingExercise = exerciceParams;
 
   // ─── États : affichage de l'animation ─────────────────────────────────────
   const [phase, setPhase] = useState<Phase>('pret');
@@ -106,27 +104,15 @@ const EcranAnimationExercice: React.FC = () => {
     setCycleCourant(n);
   };
 
-  // ─── Chargement de l'exercice au montage ─────────────────────────────────
+  // ─── Initialisation au montage : populate la ref et le titre du header ───
+  // Pas de requête API : l'exercice vient des params de navigation.
   useEffect(() => {
-    const charger = async () => {
-      try {
-        const donnees = await getExercice(idExercice);
-        exerciceRef.current = donnees;
-        setExercice(donnees);
-        // Met à jour le titre du header avec le nom de l'exercice
-        navigation.setOptions({ title: donnees.nom });
-      } catch (e: any) {
-        if (e.response?.status === 404) {
-          setErreur('Cet exercice n\'existe plus.');
-        } else {
-          setErreur('Impossible de charger cet exercice.');
-        }
-      } finally {
-        setChargement(false);
-      }
-    };
-    charger();
-  }, [idExercice]);
+    if (exerciceParams) {
+      exerciceRef.current = exerciceParams;
+      // Met à jour le titre du header avec le nom de l'exercice
+      navigation.setOptions({ title: exerciceParams.nom });
+    }
+  }, [exerciceParams]);
 
   // ─── Nettoyage quand l'écran est fermé ───────────────────────────────────
   useEffect(() => {
@@ -292,31 +278,6 @@ const EcranAnimationExercice: React.FC = () => {
     mettreAJourCompteur(0);
     mettreAJourCycle(0);
   };
-
-  // ─── Rendus conditionnels ─────────────────────────────────────────────────
-
-  if (chargement) {
-    return (
-      <View style={styles.centrer}>
-        <ActivityIndicator size="large" color="#16A34A" />
-        <Text style={styles.texteChargement}>Chargement…</Text>
-      </View>
-    );
-  }
-
-  if (erreur !== '') {
-    return (
-      <View style={styles.centrer}>
-        <Text style={styles.iconeErreur}>⚠️</Text>
-        <Text style={styles.texteErreur}>{erreur}</Text>
-        <TouchableOpacity style={styles.bouton} onPress={() => navigation.goBack()}>
-          <Text style={styles.texteBouton}>← Retour</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  if (!exercice) return null;
 
   // Couleur actuelle du cercle selon la phase
   const couleurActuelle = COULEURS_PHASES[phase];
@@ -540,27 +501,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 8,
     lineHeight: 26,
-  },
-  // États chargement / erreur
-  centrer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
-    backgroundColor: '#F0FDF4',
-  },
-  texteChargement: {
-    marginTop: 12,
-    fontSize: 15,
-    color: '#6B7280',
-  },
-  iconeErreur: { fontSize: 48, marginBottom: 12 },
-  texteErreur: {
-    fontSize: 15,
-    color: '#DC2626',
-    textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 22,
   },
 });
 

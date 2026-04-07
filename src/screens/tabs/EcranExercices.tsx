@@ -124,8 +124,9 @@ const EcranExercices: React.FC = () => {
     chargerExercices();
   }, []);
 
-  const ouvrirExercice = (idExercice: number) => {
-    navigation.navigate('AnimationExercice', { idExercice });
+  const ouvrirExercice = (exercice: BreathingExercise) => {
+    // On passe l'objet complet : l'écran d'animation n'a plus besoin de rappeler l'API
+    navigation.navigate('AnimationExercice', { exercice });
   };
 
   // ── Chargement initial ──
@@ -170,7 +171,7 @@ const EcranExercices: React.FC = () => {
       renderItem={({ item: exercice }) => (
         <CarteExercice
           exercice={exercice}
-          onAppuyer={() => ouvrirExercice(exercice.id)}
+          onAppuyer={() => ouvrirExercice(exercice)}
         />
       )}
       refreshControl={

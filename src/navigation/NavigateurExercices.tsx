@@ -8,12 +8,15 @@ import { createStackNavigator } from '@react-navigation/stack';
 
 import EcranExercices from '../screens/tabs/EcranExercices';
 import EcranAnimationExercice from '../screens/exercises/EcranAnimationExercice';
+import type { BreathingExercise } from '../services/exerciseService';
 
 // Types des routes disponibles dans ce navigateur Stack
 // Exporté pour être utilisé dans les deux écrans
 export type ParamListeRoutesExercices = {
-  ListeExercices: undefined;                  // Pas de paramètres pour la liste
-  AnimationExercice: { idExercice: number };  // L'id de l'exercice à animer
+  ListeExercices: undefined;
+  // On passe l'objet exercice complet (déjà chargé par la liste) plutôt que l'id seul.
+  // Cela évite une deuxième requête API dans l'écran d'animation.
+  AnimationExercice: { exercice: BreathingExercise };
 };
 
 const Stack = createStackNavigator<ParamListeRoutesExercices>();
