@@ -120,13 +120,35 @@ const EcranProfil: React.FC = () => {
 
         {/* Bouton : Historique des sessions */}
         <TouchableOpacity
-          style={[styles.boutonAction, styles.dernierBouton]}
+          style={[
+            styles.boutonAction,
+            !utilisateur?.roles?.includes('ROLE_ADMIN') && styles.dernierBouton,
+          ]}
           onPress={() => navigation.navigate('HistoriqueSessions')}
           activeOpacity={0.7}
         >
           <Text style={styles.texteBoutonAction}>📊  Historique des sessions</Text>
           <Text style={styles.fleche}>›</Text>
         </TouchableOpacity>
+
+        {/* Bouton : Administration (visible uniquement pour les admins) */}
+        {utilisateur?.roles?.includes('ROLE_ADMIN') && (
+          <TouchableOpacity
+            style={[styles.boutonAction, styles.dernierBouton]}
+            onPress={() => navigation.navigate('PanneauAdmin')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.texteBoutonAction, styles.texteBoutonAdmin]}>
+              👑  Panneau d'administration
+            </Text>
+            <Text style={styles.fleche}>›</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Si pas admin, mettre une bordure à la fin du dernier bouton visible */}
+        {!utilisateur?.roles?.includes('ROLE_ADMIN') && (
+          <View style={{ display: 'none' }} />
+        )}
       </View>
 
       {/* ── Déconnexion ── */}
@@ -235,6 +257,10 @@ const styles = StyleSheet.create({
   texteBoutonAction: {
     fontSize: 15,
     color: '#374151',
+  },
+  texteBoutonAdmin: {
+    color: '#16A34A',
+    fontWeight: '600',
   },
   fleche: {
     fontSize: 22,
