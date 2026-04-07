@@ -11,7 +11,8 @@ import { Ionicons } from '@expo/vector-icons';
 import EcranAccueil from '../screens/tabs/EcranAccueil';
 // NavigateurArticles remplace EcranArticles : il gère la navigation liste → détail
 import NavigateurArticles from './NavigateurArticles';
-import EcranExercices from '../screens/tabs/EcranExercices';
+// NavigateurExercices remplace EcranExercices : il gère la navigation liste → animation
+import NavigateurExercices from './NavigateurExercices';
 import EcranProfil from '../screens/tabs/EcranProfil';
 
 // Type des routes disponibles dans les onglets (undefined = pas de paramètres)
@@ -84,11 +85,12 @@ const NavigateurOnglets: React.FC = () => {
         options={{ headerShown: false, tabBarLabel: 'Articles' }}
       />
 
-      {/* Onglet 3 : Exercices de respiration */}
+      {/* Onglet 3 : Exercices (Stack liste + animation géré par NavigateurExercices) */}
+      {/* headerShown: false car NavigateurExercices a son propre header */}
       <Tab.Screen
         name="Exercices"
-        component={EcranExercices}
-        options={{ title: 'Exercices', tabBarLabel: 'Exercices' }}
+        component={NavigateurExercices}
+        options={{ headerShown: false, tabBarLabel: 'Exercices' }}
       />
 
       {/* Onglet 4 : Profil utilisateur */}
