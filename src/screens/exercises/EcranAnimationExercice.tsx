@@ -114,12 +114,28 @@ const EcranAnimationExercice: React.FC = () => {
     }
   }, [exerciceParams]);
 
+  // ─── Enregistrement automatique quand l'exercice est terminé ────────────
+  // Ce useEffect réagit au passage en phase 'termine'.
+  // On fait l'appel API ICI (dans le cycle React) plutôt que depuis setInterval,
+  // ce qui évite le throttling réseau d'Android sur les callbacks de minuterie.
+  useEffect(() => {
+    if (phase !== 'termine') return;
+    if (!sessionIdRef.current) return;
+
+    const idSession = sessionIdRef.current;
+    sessionIdRef.current = null; // On remet à null avant l'appel pour éviter un double-appel
+
+    terminerSession(idSession, 'completed').catch((e) => {
+      console.error('[Session] Impossible de marquer la session comme complétée :', e);
+    });
+  }, [phase]);
+
   // ─── Nettoyage quand l'écran est fermé ───────────────────────────────────
   useEffect(() => {
     return () => {
       // Arrête le ticker pour éviter une fuite mémoire
       if (intervalRef.current) clearInterval(intervalRef.current);
-      // Abandonne la session si l'exercice était en cours
+      // Abandonne la session si l'exercice était en cours (ni 'pret' ni 'termine')
       if (sessionIdRef.current && phaseRef.current !== 'pret' && phaseRef.current !== 'termine') {
         terminerSession(sessionIdRef.current, 'abandoned').catch(console.error);
       }
@@ -195,14 +211,11 @@ const EcranAnimationExercice: React.FC = () => {
 
           if (prochainCycle >= ex.cycles) {
             // Tous les cycles sont faits → exercice terminé !
-            mettreAJourPhase('termine');
+            // L'appel à terminerSession est délégué au useEffect qui surveille `phase`.
+            // Avantage : l'appel réseau se fait dans le cycle React, pas dans setInterval
+            // (plus fiable sur Android qui peut throttler les callbacks de minuterie).
             clearInterval(intervalRef.current!);
-
-            // Enregistre la complétion en BD
-            if (sessionIdRef.current) {
-              terminerSession(sessionIdRef.current, 'completed').catch(console.error);
-              sessionIdRef.current = null;
-            }
+            mettreAJourPhase('termine'); // ← déclenche le useEffect ci-dessus
           } else {
             // Passe au cycle suivant
             mettreAJourCycle(prochainCycle);
