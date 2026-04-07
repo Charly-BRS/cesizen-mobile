@@ -43,6 +43,23 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+// ─── Utilitaire : vérification d'expiration du token JWT ─────────────────────
+// Décode le payload du JWT (base64) et compare la date d'expiration avec l'heure actuelle.
+// Retourne true si le token est expiré OU illisible.
+const estTokenExpire = (token: string): boolean => {
+  try {
+    const partiePayload = token.split('.')[1];
+    // Convertit le base64url en base64 standard avant le décodage
+    const base64Standard = partiePayload.replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(atob(base64Standard));
+    // Le champ "exp" du JWT est en secondes, Date.now() est en millisecondes
+    return payload.exp * 1000 < Date.now();
+  } catch {
+    // Si le token est mal formé, on le considère comme expiré par sécurité
+    return true;
+  }
+};
+
 // Fournisseur du contexte d'authentification
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [utilisateur, setUtilisateur] = useState<Utilisateur | null>(null);
@@ -58,11 +75,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const utilisateurSauvegarde = await recupererUtilisateur<Utilisateur>();
 
         if (tokenSauvegarde && utilisateurSauvegarde) {
-          // Alimente le cache mémoire AVANT de mettre à jour le state React
-          // → les requêtes Axios pourront lire le token immédiatement
-          definirToken(tokenSauvegarde);
-          setToken(tokenSauvegarde);
-          setUtilisateur(utilisateurSauvegarde);
+          // Vérifie que le token n'est pas expiré avant de restaurer la session
+          if (estTokenExpire(tokenSauvegarde)) {
+            // Token périmé : on nettoie le stockage et on redirige vers le login
+            console.log('[Auth] Token expiré au démarrage → session supprimée');
+            await supprimerSession();
+          } else {
+            // Token valide : alimente le cache mémoire AVANT de mettre à jour le state
+            // → les requêtes Axios pourront lire le token immédiatement
+            definirToken(tokenSauvegarde);
+            setToken(tokenSauvegarde);
+            setUtilisateur(utilisateurSauvegarde);
+          }
         }
       } catch (erreur) {
         console.error('Erreur lors de la vérification de session :', erreur);
