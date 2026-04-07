@@ -65,9 +65,13 @@ apiClient.interceptors.response.use(
     });
 
     if (erreur.response?.status === 401) {
-      // Token expiré ou invalide : supprime la session complète
+      // Token expiré ou invalide :
+      // 1. Vide le cache mémoire immédiatement pour stopper les futures requêtes
+      tokenEnCache = null;
+      // 2. Supprime aussi le token persisté dans SecureStore
       await supprimerSession();
       // Note : la redirection vers login sera gérée par le Navigator
+      // (il observe token === null dans AuthContext)
     }
 
     return Promise.reject(erreur);
