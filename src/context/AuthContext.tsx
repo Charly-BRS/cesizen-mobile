@@ -11,6 +11,9 @@ import {
   sauvegarderUtilisateur,
   supprimerSession,
 } from '../services/storage';
+// Import de la fonction qui synchronise le cache mémoire du token dans api.ts
+// Cela évite que l'intercepteur lise SecureStore à chaque requête (source de timeouts)
+import { definirToken } from '../services/api';
 
 // Type représentant un utilisateur authentifié
 // Les champs correspondent au payload du token JWT décodé
@@ -55,6 +58,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const utilisateurSauvegarde = await recupererUtilisateur<Utilisateur>();
 
         if (tokenSauvegarde && utilisateurSauvegarde) {
+          // Alimente le cache mémoire AVANT de mettre à jour le state React
+          // → les requêtes Axios pourront lire le token immédiatement
+          definirToken(tokenSauvegarde);
           setToken(tokenSauvegarde);
           setUtilisateur(utilisateurSauvegarde);
         }
@@ -73,6 +79,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const connecter = async (nouvelUtilisateur: Utilisateur, nouveauToken: string) => {
     await sauvegarderToken(nouveauToken);
     await sauvegarderUtilisateur(nouvelUtilisateur);
+    // Met à jour le cache mémoire → les prochaines requêtes Axios auront le token
+    definirToken(nouveauToken);
     setToken(nouveauToken);
     setUtilisateur(nouvelUtilisateur);
   };
@@ -80,6 +88,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Déconnexion : supprime toutes les données de session
   const deconnecter = async () => {
     await supprimerSession();
+    // Vide le cache mémoire → les prochaines requêtes ne seront plus authentifiées
+    definirToken(null);
     setToken(null);
     setUtilisateur(null);
   };
