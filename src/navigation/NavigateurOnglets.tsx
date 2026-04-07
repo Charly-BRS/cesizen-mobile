@@ -7,9 +7,10 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 
-// Importation des 4 écrans principaux
+// Importation des écrans principaux
 import EcranAccueil from '../screens/tabs/EcranAccueil';
-import EcranArticles from '../screens/tabs/EcranArticles';
+// NavigateurArticles remplace EcranArticles : il gère la navigation liste → détail
+import NavigateurArticles from './NavigateurArticles';
 import EcranExercices from '../screens/tabs/EcranExercices';
 import EcranProfil from '../screens/tabs/EcranProfil';
 
@@ -75,11 +76,12 @@ const NavigateurOnglets: React.FC = () => {
         options={{ title: 'CESIZen', tabBarLabel: 'Accueil' }}
       />
 
-      {/* Onglet 2 : Liste des articles */}
+      {/* Onglet 2 : Articles (Stack liste + détail géré par NavigateurArticles) */}
+      {/* headerShown: false car NavigateurArticles a son propre header */}
       <Tab.Screen
         name="Articles"
-        component={EcranArticles}
-        options={{ title: 'Articles', tabBarLabel: 'Articles' }}
+        component={NavigateurArticles}
+        options={{ headerShown: false, tabBarLabel: 'Articles' }}
       />
 
       {/* Onglet 3 : Exercices de respiration */}
