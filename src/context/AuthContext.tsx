@@ -29,6 +29,7 @@ interface AuthContextType {
   chargement: boolean;
   connecter: (utilisateur: Utilisateur, token: string) => Promise<void>;
   deconnecter: () => Promise<void>;
+  mettreAJourUtilisateur: (donnees: Partial<Utilisateur>) => Promise<void>;
   estConnecte: boolean;
 }
 
@@ -83,12 +84,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUtilisateur(null);
   };
 
+  // Met à jour partiellement les données utilisateur dans l'état ET dans SecureStore.
+  // Utilisé après une modification de profil (prénom/nom) pour éviter une re-connexion.
+  const mettreAJourUtilisateur = async (donnees: Partial<Utilisateur>) => {
+    if (!utilisateur) return;
+    // Fusionne les nouvelles données avec l'utilisateur existant
+    const utilisateurMisAJour = { ...utilisateur, ...donnees };
+    await sauvegarderUtilisateur(utilisateurMisAJour);
+    setUtilisateur(utilisateurMisAJour);
+  };
+
   const valeurContexte: AuthContextType = {
     utilisateur,
     token,
     chargement,
     connecter,
     deconnecter,
+    mettreAJourUtilisateur,
     estConnecte: token !== null,
   };
 

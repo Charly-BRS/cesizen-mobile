@@ -1,7 +1,7 @@
 // src/screens/tabs/EcranProfil.tsx
-// Écran de profil : affiche les informations de l'utilisateur connecté
-// et propose un bouton de déconnexion.
-// La modification du profil et le changement de mot de passe seront en Phase 6.
+// Écran principal du profil : affiche les informations de l'utilisateur
+// et propose des boutons de navigation vers les sous-écrans (modifier, mdp, historique).
+// Contient aussi le bouton de déconnexion.
 
 import React, { useState } from 'react';
 import {
@@ -13,34 +13,34 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
 import { useAuth } from '../../context/AuthContext';
+import type { ParamListeRoutesProfil } from '../../navigation/NavigateurProfil';
+
+// Type de navigation pour accéder aux sous-écrans du profil
+type NavigationProfil = StackNavigationProp<ParamListeRoutesProfil, 'VueProfil'>;
 
 const EcranProfil: React.FC = () => {
-  // Récupère les infos utilisateur et la fonction de déconnexion depuis le contexte
+  const navigation = useNavigation<NavigationProfil>();
   const { utilisateur, deconnecter } = useAuth();
 
   // État de chargement pendant la déconnexion
   const [deconnexionEnCours, setDeconnexionEnCours] = useState<boolean>(false);
 
-  // Gère la déconnexion avec une confirmation préalable
+  // Déconnexion avec confirmation
   const gererDeconnexion = () => {
-    // Affiche une boîte de dialogue de confirmation avant de déconnecter
     Alert.alert(
       'Déconnexion',
       'Voulez-vous vraiment vous déconnecter ?',
       [
-        {
-          text: 'Annuler',
-          style: 'cancel',
-        },
+        { text: 'Annuler', style: 'cancel' },
         {
           text: 'Se déconnecter',
           style: 'destructive',
           onPress: async () => {
             setDeconnexionEnCours(true);
             try {
-              // Supprime le token du SecureStore et réinitialise le contexte
-              // → AppNavigator détecte estConnecte = false et affiche l'écran de connexion
               await deconnecter();
             } catch (erreur) {
               console.error('Erreur lors de la déconnexion :', erreur);
@@ -56,9 +56,8 @@ const EcranProfil: React.FC = () => {
   return (
     <ScrollView style={styles.conteneur} showsVerticalScrollIndicator={false}>
 
-      {/* ── Entête avec avatar et nom ── */}
+      {/* ── En-tête avec avatar et nom ── */}
       <View style={styles.entete}>
-        {/* Avatar avec les initiales de l'utilisateur */}
         <View style={styles.avatar}>
           <Text style={styles.initiales}>
             {utilisateur?.prenom?.charAt(0).toUpperCase()}
@@ -71,29 +70,22 @@ const EcranProfil: React.FC = () => {
         <Text style={styles.email}>{utilisateur?.email}</Text>
       </View>
 
-      {/* ── Informations du compte ── */}
+      {/* ── Section : Informations ── */}
       <View style={styles.section}>
-        <Text style={styles.titreSectionn}>Informations</Text>
+        <Text style={styles.titreSection}>Informations</Text>
 
-        {/* Ligne prénom */}
         <View style={styles.ligneInfo}>
           <Text style={styles.etiquetteInfo}>Prénom</Text>
           <Text style={styles.valeurInfo}>{utilisateur?.prenom}</Text>
         </View>
-
-        {/* Ligne nom */}
         <View style={styles.ligneInfo}>
           <Text style={styles.etiquetteInfo}>Nom</Text>
           <Text style={styles.valeurInfo}>{utilisateur?.nom}</Text>
         </View>
-
-        {/* Ligne email */}
         <View style={styles.ligneInfo}>
           <Text style={styles.etiquetteInfo}>Email</Text>
           <Text style={styles.valeurInfo}>{utilisateur?.email}</Text>
         </View>
-
-        {/* Ligne rôle */}
         <View style={styles.ligneInfo}>
           <Text style={styles.etiquetteInfo}>Rôle</Text>
           <Text style={styles.valeurInfo}>
@@ -102,32 +94,38 @@ const EcranProfil: React.FC = () => {
         </View>
       </View>
 
-      {/* ── Actions (à compléter en Phase 6) ── */}
+      {/* ── Section : Actions ── */}
       <View style={styles.section}>
-        <Text style={styles.titreSectionn}>Actions</Text>
+        <Text style={styles.titreSection}>Actions</Text>
 
-        {/* Bouton modifier le profil (Phase 6) */}
-        <TouchableOpacity style={styles.boutonSecondaire} disabled>
-          <Text style={styles.texteBoutonSecondaire}>
-            ✏️  Modifier le profil{' '}
-            <Text style={styles.texteBadge}>(Phase 6)</Text>
-          </Text>
+        {/* Bouton : Modifier le profil */}
+        <TouchableOpacity
+          style={styles.boutonAction}
+          onPress={() => navigation.navigate('ModifierProfil')}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.texteBoutonAction}>✏️  Modifier le profil</Text>
+          <Text style={styles.fleche}>›</Text>
         </TouchableOpacity>
 
-        {/* Bouton changer le mot de passe (Phase 6) */}
-        <TouchableOpacity style={styles.boutonSecondaire} disabled>
-          <Text style={styles.texteBoutonSecondaire}>
-            🔑  Changer le mot de passe{' '}
-            <Text style={styles.texteBadge}>(Phase 6)</Text>
-          </Text>
+        {/* Bouton : Changer le mot de passe */}
+        <TouchableOpacity
+          style={styles.boutonAction}
+          onPress={() => navigation.navigate('ChangerMotDePasse')}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.texteBoutonAction}>🔑  Changer le mot de passe</Text>
+          <Text style={styles.fleche}>›</Text>
         </TouchableOpacity>
 
-        {/* Bouton historique des sessions (Phase 6) */}
-        <TouchableOpacity style={styles.boutonSecondaire} disabled>
-          <Text style={styles.texteBoutonSecondaire}>
-            📊  Historique des sessions{' '}
-            <Text style={styles.texteBadge}>(Phase 6)</Text>
-          </Text>
+        {/* Bouton : Historique des sessions */}
+        <TouchableOpacity
+          style={[styles.boutonAction, styles.dernierBouton]}
+          onPress={() => navigation.navigate('HistoriqueSessions')}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.texteBoutonAction}>📊  Historique des sessions</Text>
+          <Text style={styles.fleche}>›</Text>
         </TouchableOpacity>
       </View>
 
@@ -157,13 +155,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F0FDF4',
   },
-  // En-tête vert avec avatar
   entete: {
     backgroundColor: '#16A34A',
     paddingVertical: 32,
     alignItems: 'center',
   },
-  // Cercle avec les initiales
   avatar: {
     width: 80,
     height: 80,
@@ -188,7 +184,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#DCFCE7',
   },
-  // Section d'informations ou d'actions
   section: {
     backgroundColor: '#FFFFFF',
     marginHorizontal: 16,
@@ -201,7 +196,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  titreSectionn: {
+  titreSection: {
     fontSize: 13,
     fontWeight: '700',
     color: '#9CA3AF',
@@ -209,7 +204,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     marginBottom: 12,
   },
-  // Ligne d'information (étiquette + valeur)
   ligneInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -226,23 +220,27 @@ const styles = StyleSheet.create({
     color: '#111827',
     fontWeight: '500',
   },
-  // Boutons d'action désactivés (Phase 6)
-  boutonSecondaire: {
-    paddingVertical: 13,
+  // Boutons de navigation vers les sous-écrans
+  boutonAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
-    opacity: 0.5,
   },
-  texteBoutonSecondaire: {
+  dernierBouton: {
+    borderBottomWidth: 0,
+  },
+  texteBoutonAction: {
     fontSize: 15,
     color: '#374151',
   },
-  texteBadge: {
-    fontSize: 12,
+  fleche: {
+    fontSize: 22,
     color: '#9CA3AF',
-    fontStyle: 'italic',
   },
-  // Section et bouton de déconnexion
+  // Déconnexion
   sectionDeconnexion: {
     marginHorizontal: 16,
     marginTop: 20,

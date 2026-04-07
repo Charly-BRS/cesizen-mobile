@@ -13,7 +13,8 @@ import EcranAccueil from '../screens/tabs/EcranAccueil';
 import NavigateurArticles from './NavigateurArticles';
 // NavigateurExercices remplace EcranExercices : il gère la navigation liste → animation
 import NavigateurExercices from './NavigateurExercices';
-import EcranProfil from '../screens/tabs/EcranProfil';
+// NavigateurProfil remplace EcranProfil : il gère la navigation vers les sous-écrans
+import NavigateurProfil from './NavigateurProfil';
 
 // Type des routes disponibles dans les onglets (undefined = pas de paramètres)
 // Exporté pour que les écrans puissent typer leur navigation
@@ -93,11 +94,12 @@ const NavigateurOnglets: React.FC = () => {
         options={{ headerShown: false, tabBarLabel: 'Exercices' }}
       />
 
-      {/* Onglet 4 : Profil utilisateur */}
+      {/* Onglet 4 : Profil (Stack profil + sous-écrans géré par NavigateurProfil) */}
+      {/* headerShown: false car NavigateurProfil a son propre header */}
       <Tab.Screen
         name="Profil"
-        component={EcranProfil}
-        options={{ title: 'Mon Profil', tabBarLabel: 'Profil' }}
+        component={NavigateurProfil}
+        options={{ headerShown: false, tabBarLabel: 'Profil' }}
       />
     </Tab.Navigator>
   );
