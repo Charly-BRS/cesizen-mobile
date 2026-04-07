@@ -1,87 +1,130 @@
 // src/navigation/AppNavigator.tsx
 // Navigateur principal de l'application CESIZen.
-// Affiche un écran de chargement pendant la vérification du token,
-// puis redirige vers l'écran approprié selon l'état d'authentification.
+//
+// Fonctionnement :
+//   1. Pendant le démarrage : affiche un écran de chargement (vérification du token stocké)
+//   2. Si connecté  → affiche les écrans de l'application (onglets en Phase 3)
+//   3. Si non connecté → affiche les écrans d'authentification (Login + Register)
+//
+// La redirection est automatique : quand connecter() ou deconnecter() est appelé
+// dans AuthContext, estConnecte change et React Navigation rebascule aussitôt.
 
 import React from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { useAuth } from '../context/AuthContext';
 
-// Écran d'accueil temporaire (sera remplacé en Phase 2)
-const EcranAccueil = () => (
-  <View style={styles.centrer}>
-    {/* Contenu de l'écran d'accueil - Phase 2 */}
-  </View>
-);
+// Importation des vrais écrans d'authentification
+import EcranConnexion from '../screens/auth/EcranConnexion';
+import EcranInscription from '../screens/auth/EcranInscription';
 
-// Écran de connexion temporaire (sera remplacé en Phase 2)
-const EcranConnexion = () => (
-  <View style={styles.centrer}>
-    {/* Formulaire de connexion - Phase 2 */}
-  </View>
-);
+// ─── Types des paramètres de routes ──────────────────────────────────────────
+// Exporté pour que les écrans puissent typer leur navigation correctement
 
-// Définition des types de routes pour TypeScript
-type ParamListeRoutes = {
-  Accueil: undefined;
-  Connexion: undefined;
+// Routes accessibles sans être connecté
+export type ParamListeRoutesAuth = {
+  Connexion: undefined;   // undefined = pas de paramètres
+  Inscription: undefined;
 };
 
-// Création du navigateur Stack
-const Stack = createStackNavigator<ParamListeRoutes>();
+// Routes accessibles après connexion (sera étendu en Phase 3 avec les onglets)
+type ParamListeRoutesConnecte = {
+  Accueil: undefined;
+};
 
-// Navigateur principal de l'application
+// ─── Création des navigateurs Stack ──────────────────────────────────────────
+const StackAuth = createStackNavigator<ParamListeRoutesAuth>();
+const StackConnecte = createStackNavigator<ParamListeRoutesConnecte>();
+
+// ─── Écran temporaire d'accueil (sera remplacé en Phase 3 par les onglets) ───
+const EcranAccueilTemporaire: React.FC = () => (
+  <View style={styles.centrer}>
+    <Text style={styles.texteAccueil}>🌿 Bienvenue sur CESIZen</Text>
+    <Text style={styles.sousTitreAccueil}>
+      La navigation par onglets sera ajoutée en Phase 3
+    </Text>
+  </View>
+);
+
+// ─── Navigateur pour les utilisateurs NON connectés ──────────────────────────
+// Regroupe les écrans Login et Register sans header (headerShown: false)
+const NavigateurAuth: React.FC = () => (
+  <StackAuth.Navigator
+    initialRouteName="Connexion"
+    screenOptions={{
+      headerShown: false,  // Pas de barre de navigation dans les écrans auth
+    }}
+  >
+    <StackAuth.Screen name="Connexion" component={EcranConnexion} />
+    <StackAuth.Screen name="Inscription" component={EcranInscription} />
+  </StackAuth.Navigator>
+);
+
+// ─── Navigateur pour les utilisateurs connectés ───────────────────────────────
+// Sera enrichi en Phase 3 avec les onglets (tabs)
+const NavigateurConnecte: React.FC = () => (
+  <StackConnecte.Navigator
+    screenOptions={{
+      // Barre de navigation verte pour les écrans connectés
+      headerStyle: { backgroundColor: '#16A34A' },
+      headerTintColor: '#FFFFFF',
+      headerTitleStyle: { fontWeight: 'bold' },
+    }}
+  >
+    <StackConnecte.Screen
+      name="Accueil"
+      component={EcranAccueilTemporaire}
+      options={{ title: 'CESIZen' }}
+    />
+  </StackConnecte.Navigator>
+);
+
+// ─── Navigateur racine ────────────────────────────────────────────────────────
 const AppNavigator: React.FC = () => {
+  // Récupère l'état d'authentification depuis le contexte global
   const { estConnecte, chargement } = useAuth();
 
-  // Affiche un indicateur de chargement pendant la vérification du token
+  // Pendant la vérification du token stocké (au démarrage de l'app)
+  // → affiche un écran de chargement pour éviter un flash d'écran
   if (chargement) {
     return (
       <View style={styles.centrer}>
-        <ActivityIndicator size="large" color="#3B82F6" />
+        <ActivityIndicator size="large" color="#16A34A" />
       </View>
     );
   }
 
   return (
+    // NavigationContainer est le conteneur racine requis par React Navigation
     <NavigationContainer>
-      <Stack.Navigator
-        // Affiche l'écran d'accueil si connecté, sinon la connexion
-        initialRouteName={estConnecte ? 'Accueil' : 'Connexion'}
-        screenOptions={{
-          headerStyle: { backgroundColor: '#3B82F6' },
-          headerTintColor: '#FFFFFF',
-          headerTitleStyle: { fontWeight: 'bold' },
-        }}
-      >
-        {estConnecte ? (
-          // Écrans accessibles uniquement après connexion
-          <Stack.Screen
-            name="Accueil"
-            component={EcranAccueil}
-            options={{ title: 'CESIZen' }}
-          />
-        ) : (
-          // Écran de connexion (non authentifié)
-          <Stack.Screen
-            name="Connexion"
-            component={EcranConnexion}
-            options={{ title: 'Connexion', headerShown: false }}
-          />
-        )}
-      </Stack.Navigator>
+      {/* Affiche le bon navigateur selon l'état de connexion */}
+      {estConnecte ? <NavigateurConnecte /> : <NavigateurAuth />}
     </NavigationContainer>
   );
 };
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
+  // Écran de chargement et accueil temporaire
   centrer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F0FDF4',
+    padding: 24,
+  },
+  texteAccueil: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#166534',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  sousTitreAccueil: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
   },
 });
 
