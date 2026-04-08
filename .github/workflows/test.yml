@@ -44,7 +44,7 @@ jobs:
       # Sauvegarder le rapport de couverture comme artefact
       - name: Sauvegarder le rapport de couverture
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: mobile-coverage
           path: coverage
