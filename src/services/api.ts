@@ -17,10 +17,21 @@ import { supprimerSession } from './storage';
 // Null au démarrage, mis à jour par AuthContext dès que l'état change.
 let tokenEnCache: string | null = null;
 
+// Callback enregistré par AuthContext pour déclencher une déconnexion propre
+// quand le serveur retourne 401 (token expiré ou invalide).
+// Sans ce mécanisme, l'app resterait bloquée sur l'écran admin sans jamais rediriger.
+let callbackDeconnexionForcee: (() => void) | null = null;
+
 // Permet à AuthContext de synchroniser le cache avec l'état d'authentification.
 // À appeler : après connexion, après restauration de session, et lors de la déconnexion.
 export const definirToken = (token: string | null): void => {
   tokenEnCache = token;
+};
+
+// Enregistre le callback à appeler en cas de 401 (token expiré côté serveur).
+// AuthContext appelle cette fonction au montage pour brancher sa fonction deconnecter().
+export const definirCallbackDeconnexion = (callback: () => void): void => {
+  callbackDeconnexionForcee = callback;
 };
 
 // Création de l'instance Axios avec l'URL de base depuis les variables d'env Expo
@@ -70,8 +81,9 @@ apiClient.interceptors.response.use(
       tokenEnCache = null;
       // 2. Supprime aussi le token persisté dans SecureStore
       await supprimerSession();
-      // Note : la redirection vers login sera gérée par le Navigator
-      // (il observe token === null dans AuthContext)
+      // 3. Notifie AuthContext pour mettre à jour l'état React et rediriger vers le login
+      //    Sans ce callback, l'app reste bloquée sur l'écran courant malgré la déconnexion
+      callbackDeconnexionForcee?.();
     }
 
     return Promise.reject(erreur);

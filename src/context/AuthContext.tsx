@@ -11,9 +11,9 @@ import {
   sauvegarderUtilisateur,
   supprimerSession,
 } from '../services/storage';
-// Import de la fonction qui synchronise le cache mémoire du token dans api.ts
+// Import des fonctions qui synchronisent le cache mémoire du token dans api.ts
 // Cela évite que l'intercepteur lise SecureStore à chaque requête (source de timeouts)
-import { definirToken } from '../services/api';
+import { definirToken, definirCallbackDeconnexion } from '../services/api';
 
 // Type représentant un utilisateur authentifié
 // Les champs correspondent au payload du token JWT décodé
@@ -66,6 +66,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   // État de chargement pendant la vérification du token au démarrage
   const [chargement, setChargement] = useState<boolean>(true);
+
+  // Au montage : enregistre le callback de déconnexion forcée dans api.ts.
+  // Quand l'intercepteur Axios reçoit un 401 (token expiré côté serveur), il appelle
+  // ce callback pour vider l'état React et déclencher la redirection vers le login.
+  useEffect(() => {
+    definirCallbackDeconnexion(() => {
+      setToken(null);
+      setUtilisateur(null);
+    });
+  }, []);
 
   // Au démarrage de l'app : vérifie si un token existe dans SecureStore
   useEffect(() => {
