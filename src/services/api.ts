@@ -42,8 +42,8 @@ const apiClient = axios.create({
     // API Platform attend du JSON-LD par défaut
     'Accept': 'application/ld+json',
   },
-  // Timeout de 10 secondes pour éviter les requêtes qui bloquent indéfiniment
-  timeout: 10000,
+  // Timeout de 30 secondes — l'API Docker en dev peut être lente au démarrage
+  timeout: 30000,
 });
 
 // Intercepteur de requête : ajoute automatiquement le token JWT si présent
